@@ -1,1 +1,1 @@
-console.log("aaaaa")
+export * from './DBFixtureJs'

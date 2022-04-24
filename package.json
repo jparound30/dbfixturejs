@@ -1,8 +1,16 @@
 {
   "name": "dbfixturejs",
   "packageManager": "yarn@3.2.0",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
+    "prebuild": "rimraf dist",
+    "build": "yarn prebuild && tsc",
+    "start": "ts-node examples/index.ts",
     "fix": "yarn format && yarn lint",
     "lint": "eslint --fix src/**/*.{ts,js} --no-error-on-unmatched-pattern",
     "format": "prettier -u --no-error-on-unmatched-pattern -w src/**/*.{ts,json,js}"
@@ -16,7 +24,12 @@
     "eslint": "^8.14.0",
     "jest": "^27.5.1",
     "prettier": "^2.6.2",
+    "rimraf": "^3.0.2",
     "ts-jest": "^27.1.4",
+    "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
+  },
+  "dependencies": {
+    "exceljs": "^4.3.0"
   }
 }
