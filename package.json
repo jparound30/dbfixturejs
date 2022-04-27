@@ -10,7 +10,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "yarn prebuild && tsc",
-    "start": "ts-node examples/index.ts",
+    "start": "ts-node --files examples/index.ts",
     "fix": "yarn format && yarn lint",
     "lint": "eslint --fix src/**/*.{ts,js} --no-error-on-unmatched-pattern",
     "format": "prettier -u --no-error-on-unmatched-pattern -w src/**/*.{ts,json,js}"
