@@ -1,5 +1,6 @@
 import Excel from 'exceljs'
-import mysql2 from 'mysql2/promise'
+import mysql2, { ResultSetHeader } from 'mysql2/promise'
+import dayjs from 'dayjs'
 
 export interface DBFixtureConnOpts {
   host: string
@@ -11,11 +12,12 @@ export interface DBFixtureConnOpts {
 
 export class DBFixtureJs {
   private readonly dbConnOpt: DBFixtureConnOpts
+
   constructor(option: DBFixtureConnOpts) {
     this.dbConnOpt = option
   }
 
-  public async load(filepath: string = './examples/testdata1.xlsx'): Promise<void> {
+  public async load(filepath: string): Promise<void> {
     console.log('load()')
 
     const opt = Object.assign({}, this.dbConnOpt)
@@ -47,16 +49,29 @@ export class DBFixtureJs {
     console.log(`columnNameList = ${columnNameList}`)
 
     const rowDataList: RowData[] = []
-    worksheet1.eachRow((row, rowNumber) => {
+    worksheet1.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       if (rowNumber === 1) {
         return
       }
       console.log(`row = ${rowNumber}`)
       // eslint-disable-next-line no-unused-vars
-      const rowData: RowData = []
-      row.eachCell({ includeEmpty: true }, (cell) => {
-        console.log(`cell.type =  ${cell.type}, value = ${cell.value}, text = ${cell.text}`)
-        rowData.push(cell.value?.toString() ?? '##NULL##')
+      const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        console.log(`${colNumber} cell.type =  ${cell.type}, value = ${cell.value}, text = ${cell.text}`)
+        const valueType = cell.type
+        if (valueType === Excel.ValueType.Number) {
+          rowData[colNumber - 1] = cell.value as number
+        } else if (valueType === Excel.ValueType.String) {
+          rowData[colNumber - 1] = cell.value as string
+        } else if (valueType === Excel.ValueType.Date) {
+          rowData[colNumber - 1] = cell.value as Date
+        } else if (valueType === Excel.ValueType.Null) {
+          rowData[colNumber - 1] = null
+        } else {
+          console.warn(`非対応の書式が使われている ${cell.$col$row}`)
+          rowData[colNumber - 1] = null
+        }
+        console.log(`typeof cell.value = ${typeof cell.value}`)
       })
       rowDataList.push(rowData)
     })
@@ -67,7 +82,9 @@ export class DBFixtureJs {
     }
 
     // eslint-disable-next-line no-unused-vars
-    const [data, fields] = await connection.query(`SELECT * FROM ${from}`)
+    const [data, fields] = await connection.query(`SELECT *
+                                                       FROM ${from}
+                                                       LIMIT 1`)
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
@@ -76,11 +93,35 @@ export class DBFixtureJs {
     })
     console.log(ct)
 
+    let hasClmnInSameOrder = true
+    columnNameList.forEach((excelCols, index) => {
+      if (excelCols !== ct[index].columnName) {
+        hasClmnInSameOrder = false
+      }
+    })
+    if (hasClmnInSameOrder) {
+      console.log('テーブルのカラム順とExcelのカラム順が異なる')
+      return
+    }
+
     const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
     console.log(td1)
 
-    console.log(td1.createInsertSql())
+    const inserSql = td1.createInsertSql()
+    console.log(inserSql)
+
+    await this.truncateTbl(td1.tableName, connection)
+
+    const [insData] = await connection.query(inserSql)
+    console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+
     return
+  }
+
+  private async truncateTbl(target: string, conn: mysql2.Connection) {
+    console.log(`truncateTable: ${target}`)
+    // eslint-disable-next-line no-unused-vars
+    await conn.execute(`TRUNCATE ${target}`)
   }
 
   public export() {
@@ -132,7 +173,7 @@ function typeToString(type: number): string | undefined {
   return convTbl.get(type)
 }
 
-type RowData = Array<string>
+type RowData = Array<string | number | Date | null>
 
 type TypesVal = typeof Types[keyof typeof Types]
 
@@ -147,6 +188,7 @@ class TableData {
   get tableName() {
     return this.schemaName ? `${this.schemaName}.${this.name}` : `${this.name}`
   }
+
   constructor(init: { schemaName?: string; name: string; data?: RowData[]; columnTypes: ColumnTypes }) {
     this.schemaName = init.schemaName ?? null
     this.name = init.name
@@ -157,6 +199,30 @@ class TableData {
   public createInsertSql(): string {
     const sql1 = `INSERT INTO ${this.tableName} `
     const cols = '(' + this.columnTypes.map((v) => v.columnName).join(',') + ') VALUES '
-    return sql1 + cols
+    const values = this.data.map((row) => {
+      const rowStr = row
+        .map((col, index) => {
+          if (typeof col === 'string') {
+            return mysql2.escape(col)
+          } else if (typeof col === 'number') {
+            return col
+          } else if (col instanceof Date) {
+            let dateStr: string
+            if (this.columnTypes[index].columnType === Types.DATETIME) {
+              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
+            } else if (this.columnTypes[index].columnType === Types.TIMESTAMP) {
+              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
+            } else {
+              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
+            }
+
+            return mysql2.escape(dateStr)
+          }
+          return mysql2.escape(col)
+        })
+        .join(',')
+      return `(${rowStr}) \n`
+    })
+    return sql1 + cols + values
   }
 }

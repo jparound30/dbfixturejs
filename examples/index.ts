@@ -9,7 +9,7 @@ const dbFixtureJs = new DBFixtureJs({
 })
 
 dbFixtureJs
-  .load()
+  .load('./examples/testdata1.xlsx')
   .then(() => {
     dbFixtureJs.export()
   })
