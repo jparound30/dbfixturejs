@@ -38,6 +38,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/node", "npm:17.0.25"],\
             ["@typescript-eslint/eslint-plugin", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:5.20.0"],\
             ["@typescript-eslint/parser", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:5.20.0"],\
+            ["dayjs", "npm:1.11.1"],\
             ["eslint", "npm:8.14.0"],\
             ["exceljs", "npm:4.3.0"],\
             ["jest", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:27.5.1"],\
@@ -2641,6 +2642,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/node", "npm:17.0.25"],\
             ["@typescript-eslint/eslint-plugin", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:5.20.0"],\
             ["@typescript-eslint/parser", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:5.20.0"],\
+            ["dayjs", "npm:1.11.1"],\
             ["eslint", "npm:8.14.0"],\
             ["exceljs", "npm:4.3.0"],\
             ["jest", "virtual:8d152b1d08cace2a1326cb34716605ed282a11b5815e8147ee724042028c7eca9a271ed304ae1df2a0a1402281a1ad98cf3cd009d71570dd56ec2b483f4b420e#npm:27.5.1"],\

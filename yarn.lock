@@ -1873,7 +1873,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dayjs@npm:^1.8.34":
+"dayjs@npm:^1.11.1, dayjs@npm:^1.8.34":
   version: 1.11.1
   resolution: "dayjs@npm:1.11.1"
   checksum: d5fefd79935f64a3c262e67af7ebeca180bc402b3e99be4e12d20b6d438af3f86d507ba1cbaff95dc0b4e67f1067cea3eaf37b6b74f5494fdd4a6a2909514cd1
@@ -1889,6 +1889,7 @@ __metadata:
     "@types/node": ^17.0.25
     "@typescript-eslint/eslint-plugin": ^5.20.0
     "@typescript-eslint/parser": ^5.20.0
+    dayjs: ^1.11.1
     eslint: ^8.14.0
     exceljs: ^4.3.0
     jest: ^27.5.1
