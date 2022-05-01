@@ -46,18 +46,16 @@ export class DBFixtureJs {
     if (columnNameList.includes('##INVALID##')) {
       return
     }
-    console.log(`columnNameList = ${columnNameList}`)
+    // console.log(`columnNameList = ${columnNameList}`)
 
     const rowDataList: RowData[] = []
     worksheet1.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       if (rowNumber === 1) {
         return
       }
-      console.log(`row = ${rowNumber}`)
-      // eslint-disable-next-line no-unused-vars
       const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
       row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        console.log(`${colNumber} cell.type =  ${cell.type}, value = ${cell.value}, text = ${cell.text}`)
+        // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
         const valueType = cell.type
         if (valueType === Excel.ValueType.Number) {
           rowData[colNumber - 1] = cell.value as number
@@ -71,7 +69,6 @@ export class DBFixtureJs {
           console.warn(`非対応の書式が使われている ${cell.$col$row}`)
           rowData[colNumber - 1] = null
         }
-        console.log(`typeof cell.value = ${typeof cell.value}`)
       })
       rowDataList.push(rowData)
     })
@@ -88,10 +85,9 @@ export class DBFixtureJs {
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
-      console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
+      // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
       ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
     })
-    console.log(ct)
 
     let hasClmnInSameOrder = true
     columnNameList.forEach((excelCols, index) => {
@@ -105,7 +101,7 @@ export class DBFixtureJs {
     }
 
     const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
-    console.log(td1)
+    // console.log(td1)
 
     const inserSql = td1.createInsertSql()
     console.log(inserSql)
@@ -129,7 +125,30 @@ export class DBFixtureJs {
   }
 }
 
-const Types = {
+const ExcelValueType = {
+  Null: 0,
+  Merge: 1,
+  Number: 2,
+  String: 3,
+  Date: 4,
+  Hyperlink: 5,
+  Formula: 6,
+  SharedString: 7,
+  RichText: 8,
+  Boolean: 9,
+  Error: 10,
+} as const
+
+const convTblForExcelValueType = new Map<number, string>()
+Object.entries(ExcelValueType).forEach((v) => {
+  convTblForExcelValueType.set(v[1], v[0])
+})
+
+function excelValueTypeToString(type: number): string | undefined {
+  return convTblForExcelValueType.get(type)
+}
+
+const DBColumnTypes = {
   DECIMAL: 0,
   TINY: 1,
   SHORT: 2,
@@ -164,10 +183,9 @@ const Types = {
 } as const
 
 const convTbl = new Map<number, string>()
-Object.entries(Types).forEach((v) => {
+Object.entries(DBColumnTypes).forEach((v) => {
   convTbl.set(v[1], v[0])
 })
-console.log(convTbl)
 
 function typeToString(type: number): string | undefined {
   return convTbl.get(type)
@@ -175,7 +193,7 @@ function typeToString(type: number): string | undefined {
 
 type RowData = Array<string | number | Date | null>
 
-type TypesVal = typeof Types[keyof typeof Types]
+type TypesVal = typeof DBColumnTypes[keyof typeof DBColumnTypes]
 
 type ColumnTypes = Array<{ columnName: string; columnType: TypesVal }>
 
@@ -198,7 +216,7 @@ class TableData {
 
   public createInsertSql(): string {
     const sql1 = `INSERT INTO ${this.tableName} `
-    const cols = '(' + this.columnTypes.map((v) => v.columnName).join(',') + ') VALUES '
+    const cols = '(' + this.columnTypes.map((v) => v.columnName).join(',') + ') VALUES \n'
     const values = this.data.map((row) => {
       const rowStr = row
         .map((col, index) => {
@@ -208,9 +226,9 @@ class TableData {
             return col
           } else if (col instanceof Date) {
             let dateStr: string
-            if (this.columnTypes[index].columnType === Types.DATETIME) {
+            if (this.columnTypes[index].columnType === DBColumnTypes.DATETIME) {
               dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
-            } else if (this.columnTypes[index].columnType === Types.TIMESTAMP) {
+            } else if (this.columnTypes[index].columnType === DBColumnTypes.TIMESTAMP) {
               dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
             } else {
               dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
