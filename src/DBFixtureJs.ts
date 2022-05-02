@@ -1,4 +1,4 @@
-import Excel from 'exceljs'
+import ExcelJS from 'exceljs'
 import mysql2, { ResultSetHeader } from 'mysql2/promise'
 import dayjs from 'dayjs'
 
@@ -23,7 +23,7 @@ export class DBFixtureJs {
     const opt = Object.assign({}, this.dbConnOpt)
     const connection = await mysql2.createConnection(opt)
 
-    const workbook = new Excel.Workbook()
+    const workbook = new ExcelJS.Workbook()
     const worksheet = await workbook.xlsx.readFile(filepath)
     // console.dir(worksheet)
     let worksheet1 = worksheet.getWorksheet(1)
@@ -57,13 +57,13 @@ export class DBFixtureJs {
       row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
         const valueType = cell.type
-        if (valueType === Excel.ValueType.Number) {
+        if (valueType === ExcelJS.ValueType.Number) {
           rowData[colNumber - 1] = cell.value as number
-        } else if (valueType === Excel.ValueType.String) {
+        } else if (valueType === ExcelJS.ValueType.String) {
           rowData[colNumber - 1] = cell.value as string
-        } else if (valueType === Excel.ValueType.Date) {
+        } else if (valueType === ExcelJS.ValueType.Date) {
           rowData[colNumber - 1] = cell.value as Date
-        } else if (valueType === Excel.ValueType.Null) {
+        } else if (valueType === ExcelJS.ValueType.Null) {
           rowData[colNumber - 1] = null
         } else {
           console.warn(`非対応の書式が使われている ${cell.$col$row}`)
