@@ -4,8 +4,8 @@ const dbFixtureJs = new DBFixtureJs({
   host: 'localhost',
   database: 'test',
   charset: 'utf8',
-  user: 'admin',
-  password: 'admin12345',
+  user: 'user',
+  password: 'user12345!',
 })
 
 dbFixtureJs
