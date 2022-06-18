@@ -74,21 +74,21 @@ export class DBFixtureJs {
         rowDataList.push(rowData)
       })
 
-    const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
-    if (from.includes(' ')) {
-      return
-    }
+      const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
+      if (from.includes(' ')) {
+        return
+      }
 
-    // eslint-disable-next-line no-unused-vars
-    const [data, fields] = await connection.query(`SELECT *
-                                                       FROM ${from}
-                                                       LIMIT 1`)
+      // eslint-disable-next-line no-unused-vars
+      const [data, fields] = await connection.query(`SELECT *
+                                                           FROM ${from}
+                                                           LIMIT 1`)
 
-    let ct: ColumnTypes = []
-    fields.forEach((v) => {
-      // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
-      ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
-    })
+      let ct: ColumnTypes = []
+      fields.forEach((v) => {
+        // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
+        ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
+      })
 
       let hasClmnInSameOrder = true
       columnNameList.forEach((excelCols, index) => {
@@ -101,13 +101,13 @@ export class DBFixtureJs {
         return
       }
 
-    const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
-    // console.log(td1)
+      const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
+      // console.log(td1)
 
-    const inserSql = td1.createInsertSql()
-    console.log(inserSql)
+      const inserSql = td1.createInsertSql()
+      console.log(inserSql)
 
-    await this.truncateTbl(td1.tableName, connection)
+      await this.truncateTbl(td1.tableName, connection)
 
       const [insData] = await connection.query(inserSql)
       console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
