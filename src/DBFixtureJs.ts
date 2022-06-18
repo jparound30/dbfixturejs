@@ -23,30 +23,31 @@ export class DBFixtureJs {
     const opt = Object.assign({}, this.dbConnOpt)
     const connection = await mysql2.createConnection(opt)
 
-    const workbook = new ExcelJS.Workbook()
-    const worksheet = await workbook.xlsx.readFile(filepath)
-    // console.dir(worksheet)
-    let worksheet1 = worksheet.getWorksheet(1)
-    console.log('シート名: ' + worksheet1.name)
-    const schemaAndTable = worksheet1.name.split('.', 2)
-    if (schemaAndTable.length === 0) {
-      return
-    }
-    let dbName: string | undefined
-    let tableName: string
-    if (schemaAndTable.length === 1) {
-      tableName = schemaAndTable[0]
-    } else {
-      dbName = schemaAndTable[0]
-      tableName = schemaAndTable[1]
-    }
-    const headerRow = worksheet1.getRow(1)
-    const columnNameList: string[] = []
-    headerRow.eachCell({ includeEmpty: true }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
-    if (columnNameList.includes('##INVALID##')) {
-      return
-    }
-    // console.log(`columnNameList = ${columnNameList}`)
+    try {
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = await workbook.xlsx.readFile(filepath)
+      // console.dir(worksheet)
+      let worksheet1 = worksheet.getWorksheet(1)
+      console.log('シート名: ' + worksheet1.name)
+      const schemaAndTable = worksheet1.name.split('.', 2)
+      if (schemaAndTable.length === 0) {
+        return
+      }
+      let dbName: string | undefined
+      let tableName: string
+      if (schemaAndTable.length === 1) {
+        tableName = schemaAndTable[0]
+      } else {
+        dbName = schemaAndTable[0]
+        tableName = schemaAndTable[1]
+      }
+      const headerRow = worksheet1.getRow(1)
+      const columnNameList: string[] = []
+      headerRow.eachCell({ includeEmpty: false }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
+      if (columnNameList.includes('##INVALID##')) {
+        return
+      }
+      // console.log(`columnNameList = ${columnNameList}`)
 
     const rowDataList: RowData[] = []
     worksheet1.eachRow({ includeEmpty: true }, (row, rowNumber) => {
@@ -108,9 +109,11 @@ export class DBFixtureJs {
 
     await this.truncateTbl(td1.tableName, connection)
 
-    const [insData] = await connection.query(inserSql)
-    console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
-
+      const [insData] = await connection.query(inserSql)
+      console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+    } finally {
+      connection.end()
+    }
     return
   }
 
