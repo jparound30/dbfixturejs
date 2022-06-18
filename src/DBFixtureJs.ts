@@ -49,30 +49,30 @@ export class DBFixtureJs {
       }
       // console.log(`columnNameList = ${columnNameList}`)
 
-    const rowDataList: RowData[] = []
-    worksheet1.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-      if (rowNumber === 1) {
-        return
-      }
-      const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
-      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
-        const valueType = cell.type
-        if (valueType === ExcelJS.ValueType.Number) {
-          rowData[colNumber - 1] = cell.value as number
-        } else if (valueType === ExcelJS.ValueType.String) {
-          rowData[colNumber - 1] = cell.value as string
-        } else if (valueType === ExcelJS.ValueType.Date) {
-          rowData[colNumber - 1] = cell.value as Date
-        } else if (valueType === ExcelJS.ValueType.Null) {
-          rowData[colNumber - 1] = null
-        } else {
-          console.warn(`非対応の書式が使われている ${cell.$col$row}`)
-          rowData[colNumber - 1] = null
+      const rowDataList: RowData[] = []
+      worksheet1.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        if (rowNumber === 1) {
+          return
         }
+        const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
+        row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+          // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
+          const valueType = cell.type
+          if (valueType === ExcelJS.ValueType.Number) {
+            rowData[colNumber - 1] = cell.value as number
+          } else if (valueType === ExcelJS.ValueType.String) {
+            rowData[colNumber - 1] = cell.value as string
+          } else if (valueType === ExcelJS.ValueType.Date) {
+            rowData[colNumber - 1] = cell.value as Date
+          } else if (valueType === ExcelJS.ValueType.Null) {
+            rowData[colNumber - 1] = null
+          } else {
+            console.warn(`非対応の書式が使われている ${cell.$col$row}`)
+            rowData[colNumber - 1] = null
+          }
+        })
+        rowDataList.push(rowData)
       })
-      rowDataList.push(rowData)
-    })
 
     const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
     if (from.includes(' ')) {
