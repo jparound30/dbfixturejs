@@ -90,16 +90,16 @@ export class DBFixtureJs {
       ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
     })
 
-    let hasClmnInSameOrder = true
-    columnNameList.forEach((excelCols, index) => {
-      if (excelCols !== ct[index].columnName) {
-        hasClmnInSameOrder = false
+      let hasClmnInSameOrder = true
+      columnNameList.forEach((excelCols, index) => {
+        if (excelCols !== ct[index].columnName) {
+          hasClmnInSameOrder = false
+        }
+      })
+      if (!hasClmnInSameOrder) {
+        console.log('テーブルのカラム順とExcelのカラム順が異なる')
+        return
       }
-    })
-    if (hasClmnInSameOrder) {
-      console.log('テーブルのカラム順とExcelのカラム順が異なる')
-      return
-    }
 
     const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
     // console.log(td1)
