@@ -225,6 +225,9 @@ class TableData {
     const values = this.data.map((row) => {
       const rowStr = row
         .map((col, index) => {
+          if (this.columnTypes[index].columnType === DBColumnTypes.BIT) {
+            return `b'${col}'`
+          }
           if (typeof col === 'string') {
             return mysql2.escape(col)
           } else if (typeof col === 'number') {
