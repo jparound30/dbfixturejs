@@ -147,6 +147,7 @@ Object.entries(ExcelValueType).forEach((v) => {
   convTblForExcelValueType.set(v[1], v[0])
 })
 
+// eslint-disable-next-line no-unused-vars
 function excelValueTypeToString(type: number): string | undefined {
   return convTblForExcelValueType.get(type)
 }
@@ -190,6 +191,7 @@ Object.entries(DBColumnTypes).forEach((v) => {
   convTbl.set(v[1], v[0])
 })
 
+// eslint-disable-next-line no-unused-vars
 function typeToString(type: number): string | undefined {
   return convTbl.get(type)
 }
