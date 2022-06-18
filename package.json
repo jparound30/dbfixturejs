@@ -13,7 +13,8 @@
     "start": "ts-node --files examples/index.ts",
     "fix": "yarn format && yarn lint",
     "lint": "eslint --fix src/**/*.{ts,js} --no-error-on-unmatched-pattern",
-    "format": "prettier -u --no-error-on-unmatched-pattern -w src/**/*.{ts,json,js}"
+    "format": "prettier -u --no-error-on-unmatched-pattern -w src/**/*.{ts,json,js}",
+    "test": "jest"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
