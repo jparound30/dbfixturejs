@@ -20,7 +20,7 @@ export class DBFixtureJs {
   public async load(filepath: string): Promise<void> {
     console.log('load()')
 
-    const opt = Object.assign({}, this.dbConnOpt)
+    const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
     const connection = await mysql2.createConnection(opt)
 
     try {
@@ -81,8 +81,8 @@ export class DBFixtureJs {
 
       // eslint-disable-next-line no-unused-vars
       const [data, fields] = await connection.query(`SELECT *
-                                                           FROM ${from}
-                                                           LIMIT 1`)
+                                                     FROM ${from}
+                                                     LIMIT 1`)
 
       let ct: ColumnTypes = []
       fields.forEach((v) => {
