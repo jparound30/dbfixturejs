@@ -104,23 +104,33 @@ export class DBFixtureJs {
       const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
       // console.log(td1)
 
-      const inserSql = td1.createInsertSql()
-      console.log(inserSql)
+      const insertSql = td1.createInsertSql()
+      console.log(insertSql)
 
       await this.truncateTbl(td1.tableName, connection)
 
-      const [insData] = await connection.query(inserSql)
-      console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+      await this.executeSql([insertSql], connection)
     } finally {
       connection.end()
     }
     return
   }
 
+  public createSqlFrom(filepath: string): string[] {
+    // TODO
+    return []
+  }
+
   private async truncateTbl(target: string, conn: mysql2.Connection) {
     console.log(`truncateTable: ${target}`)
-    // eslint-disable-next-line no-unused-vars
     await conn.execute(`TRUNCATE ${target}`)
+  }
+
+  private async executeSql(sqls: string[], conn: mysql2.Connection): Promise<void> {
+    for (const insertSql of sqls) {
+      const [insData] = await conn.query(insertSql)
+      console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+    }
   }
 
   public export() {
@@ -225,24 +235,26 @@ class TableData {
     const values = this.data.map((row) => {
       const rowStr = row
         .map((col, index) => {
-          if (this.columnTypes[index].columnType === DBColumnTypes.BIT) {
+          const columnType = this.columnTypes[index].columnType
+          if (columnType === DBColumnTypes.BIT) {
             return `b'${col}'`
+          } else if (columnType === DBColumnTypes.DATETIME) {
+            const val = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
+            return mysql2.escape(val)
+          } else if (columnType === DBColumnTypes.TIMESTAMP) {
+            const val = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
+            return mysql2.escape(val)
+          } else if (columnType === DBColumnTypes.DATE) {
+            const val = dayjs(col).format('YYYY-MM-DD')
+            return mysql2.escape(val)
+          } else if (columnType === DBColumnTypes.TIME) {
+            const val = dayjs(col).format('HH:mm:ss')
+            return mysql2.escape(val)
           }
           if (typeof col === 'string') {
             return mysql2.escape(col)
           } else if (typeof col === 'number') {
             return col
-          } else if (col instanceof Date) {
-            let dateStr: string
-            if (this.columnTypes[index].columnType === DBColumnTypes.DATETIME) {
-              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
-            } else if (this.columnTypes[index].columnType === DBColumnTypes.TIMESTAMP) {
-              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
-            } else {
-              dateStr = dayjs(col).format('YYYY-MM-DD HH:mm:ss')
-            }
-
-            return mysql2.escape(dateStr)
           }
           return mysql2.escape(col)
         })
