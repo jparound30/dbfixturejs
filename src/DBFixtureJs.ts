@@ -247,9 +247,6 @@ class TableData {
           } else if (columnType === DBColumnTypes.DATE) {
             const val = dayjs(col).format('YYYY-MM-DD')
             return mysql2.escape(val)
-          } else if (columnType === DBColumnTypes.TIME) {
-            const val = dayjs(col).format('HH:mm:ss')
-            return mysql2.escape(val)
           }
           if (typeof col === 'string') {
             return mysql2.escape(col)
