@@ -11,9 +11,9 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+#      - mysql_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
 
-volumes:
-  mysql_data:
-    driver: local
+#volumes:
+#  mysql_data:
+#    driver: local
