@@ -2,6 +2,7 @@ import { DBFixtureConnOpts, DBFixtureJs } from '../src'
 import * as path from 'path'
 import mysql2, { RowDataPacket } from 'mysql2/promise'
 import dayjs from 'dayjs'
+import { TextEncoder } from 'util'
 
 const conf: DBFixtureConnOpts = {
   host: 'localhost',
@@ -26,6 +27,7 @@ describe('DBFixtureJs', () => {
 
   const testdata1File = path.join(__dirname, 'test_data_numbers.xlsx')
   const testdata2File = path.join(__dirname, 'test_data_datetime.xlsx')
+  const testdata3File = path.join(__dirname, 'test_data_strings.xlsx')
 
   test('整数型のカラムに値が入れられること', async () => {
     await dbfixture.load(testdata1File)
@@ -55,5 +57,35 @@ describe('DBFixtureJs', () => {
     expect(data[0].c_date).toEqual(dayjs('2021-01-09').toDate())
     expect(data[0].c_time).toBe('13:09:59')
     expect(data[0].c_year).toBe(2023)
+  })
+
+  test('文字列側のカラムに値が入れられること', async () => {
+    await dbfixture.load(testdata3File)
+
+    const result = await connection.query(`SELECT * FROM string_cols`)
+    const data = result[0] as RowDataPacket[]
+
+    expect(data[0].k).toBe(1)
+    expect(data[0].c_char).toBe('10文字なんだけど？')
+    expect(data[0].c_varchar).toBe('よくあるばーきゃら')
+    const expect_c_binary = new TextEncoder().encode('binary?\0\0\0')
+    expect(data[0].c_binary).toHaveLength(10)
+    data[0].c_binary.forEach((v: number, i: number) => {
+      expect(v).toBe(expect_c_binary[i])
+    })
+    const expect_c_varbinary = new TextEncoder().encode('whatisvar')
+    expect(data[0].c_varbinary).toHaveLength(expect_c_varbinary.length)
+    data[0].c_varbinary.forEach((v: number, i: number) => {
+      expect(v).toBe(expect_c_varbinary[i])
+    })
+    const expect_c_blob = new TextEncoder().encode('this column is blob, but data strings in ascii chars stored ')
+    expect(data[0].c_blob).toHaveLength(expect_c_blob.length)
+    data[0].c_blob.forEach((v: number, i: number) => {
+      expect(v).toBe(expect_c_blob[i])
+    })
+    expect(data[0].c_text).toBe(`なんだかながいてきすとが思いつかないので、適当に手が動くままに打たれた文字を入れておくよ。
+ついでに改行も入れてみてどうなるか見てみるよ`)
+    expect(data[0].c_enum).toBe('two')
+    expect(data[0].c_set).toBe('b,d')
   })
 })
