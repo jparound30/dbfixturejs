@@ -23,11 +23,13 @@ afterAll(async () => {
 })
 
 describe('DBFixtureJs', () => {
-  const dbfixture = new DBFixtureJs(conf)
+  const dbfixture = new DBFixtureJs(conf, {})
 
   const testdata1File = path.join(__dirname, 'test_data_numbers.xlsx')
   const testdata2File = path.join(__dirname, 'test_data_datetime.xlsx')
   const testdata3File = path.join(__dirname, 'test_data_strings.xlsx')
+
+  const testdataIncEmptyFile = path.join(__dirname, 'test_data_inc_empty.xlsx')
 
   const testdataMultiTableFile = path.join(__dirname, 'test_data_multitables.xlsx')
 
@@ -111,5 +113,16 @@ describe('DBFixtureJs', () => {
 
     expect(data3[0].id).toBe(1)
     expect(data3[0].multi3).toBe('multi3')
+  })
+
+  test('文字列側のカラムに空文字相当の値が設定できること', async () => {
+    await dbfixture.load(testdataIncEmptyFile)
+
+    const result = await connection.query(`SELECT * FROM string_cols`)
+    const data = result[0] as RowDataPacket[]
+
+    expect(data[0].k).toBe(1)
+    expect(data[0].c_char).toBeNull()
+    expect(data[0].c_varchar).toBe('')
   })
 })

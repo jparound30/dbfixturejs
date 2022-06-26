@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs'
 import mysql2, { ResultSetHeader } from 'mysql2/promise'
 import dayjs from 'dayjs'
+import { DBFixtureJsOptions } from './index'
 
 export interface DBFixtureConnOpts {
   host: string
@@ -19,9 +20,10 @@ class DBFixtureJsError extends Error {
   }
 }
 
-async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection): Promise<TableData[]> {
+async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection, options: Required<DBFixtureJsOptions>): Promise<TableData[]> {
   const ret: TableData[] = []
 
+  const emptyStr = options.emptyStrForStringColumn
   const workbook = new ExcelJS.Workbook()
   const wb = await workbook.xlsx.readFile(excelFilePath)
 
@@ -54,7 +56,6 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection)
       }
       const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
       row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-        // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
         const valueType = cell.type
         if (valueType === ExcelJS.ValueType.Number) {
           rowData[colNumber - 1] = cell.value as number
@@ -80,8 +81,8 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection)
 
     // eslint-disable-next-line no-unused-vars
     const [, fields] = await dbConn.query(`SELECT *
-                                           FROM ${from}
-                                           LIMIT 1`)
+                                               FROM ${from}
+                                               LIMIT 1`)
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
@@ -101,7 +102,7 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection)
       // return
     }
 
-    const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
+    const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList, emptyStr: emptyStr })
     ret.push(td1)
   }
 
@@ -110,9 +111,11 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection)
 
 export class DBFixtureJs {
   private readonly dbConnOpt: DBFixtureConnOpts
+  private readonly options: Required<DBFixtureJsOptions>
 
-  constructor(option: DBFixtureConnOpts) {
-    this.dbConnOpt = option
+  constructor(connOpts: DBFixtureConnOpts, options: DBFixtureJsOptions) {
+    this.dbConnOpt = connOpts
+    this.options = Object.assign({}, options, { emptyStrForStringColumn: options.emptyStrForStringColumn ?? 'EMPTY' })
   }
 
   public async load(filepath: string): Promise<void> {
@@ -122,7 +125,7 @@ export class DBFixtureJs {
     const connection = await mysql2.createConnection(opt)
 
     try {
-      let tableData = await excel2TableData(filepath, connection)
+      let tableData = await excel2TableData(filepath, connection, this.options)
 
       for (let td of tableData) {
         const insertSql = td.createInsertSql()
@@ -229,6 +232,20 @@ type RowData = Array<string | number | Date | null>
 
 type TypesVal = typeof DBColumnTypes[keyof typeof DBColumnTypes]
 
+const isStringColumnType = (v: TypesVal): boolean => {
+  return (
+    v === DBColumnTypes.VARCHAR ||
+    v === DBColumnTypes.ENUM ||
+    v === DBColumnTypes.SET ||
+    v === DBColumnTypes.TINY_BLOB ||
+    v === DBColumnTypes.MEDIUM_BLOB ||
+    v === DBColumnTypes.LONG_BLOB ||
+    v === DBColumnTypes.BLOB ||
+    v === DBColumnTypes.VAR_STRING ||
+    v === DBColumnTypes.STRING
+  )
+}
+
 type ColumnTypes = Array<{ columnName: string; columnType: TypesVal }>
 
 class TableData {
@@ -236,16 +253,18 @@ class TableData {
   readonly name: string
   data: RowData[]
   columnTypes: ColumnTypes
+  readonly emptyStr: string
 
   get tableName() {
     return this.schemaName ? `${this.schemaName}.${this.name}` : `${this.name}`
   }
 
-  constructor(init: { schemaName?: string; name: string; data?: RowData[]; columnTypes: ColumnTypes }) {
+  constructor(init: { schemaName?: string; name: string; data?: RowData[]; columnTypes: ColumnTypes; emptyStr: string }) {
     this.schemaName = init.schemaName ?? null
     this.name = init.name
     this.data = init.data ?? []
     this.columnTypes = init.columnTypes
+    this.emptyStr = init.emptyStr
   }
 
   public createInsertSql(): string {
@@ -255,6 +274,11 @@ class TableData {
       const rowStr = row
         .map((col, index) => {
           const columnType = this.columnTypes[index].columnType
+          if (isStringColumnType(this.columnTypes[index].columnType)) {
+            if (col !== null && col.toString().match(this.emptyStr)) {
+              return mysql2.escape('')
+            }
+          }
           if (columnType === DBColumnTypes.BIT) {
             return `b'${col}'`
           } else if (columnType === DBColumnTypes.DATETIME) {
