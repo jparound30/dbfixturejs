@@ -23,86 +23,87 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection)
   const ret: TableData[] = []
 
   const workbook = new ExcelJS.Workbook()
-  const worksheet = await workbook.xlsx.readFile(excelFilePath)
-  // console.dir(worksheet)
-  let worksheet1 = worksheet.getWorksheet(1)
-  console.log('シート名: ' + worksheet1.name)
-  const schemaAndTable = worksheet1.name.split('.', 2)
-  if (schemaAndTable.length === 0) {
-    return ret
-  }
-  let dbName: string | undefined
-  let tableName: string
-  if (schemaAndTable.length === 1) {
-    tableName = schemaAndTable[0]
-  } else {
-    dbName = schemaAndTable[0]
-    tableName = schemaAndTable[1]
-  }
-  const headerRow = worksheet1.getRow(1)
-  const columnNameList: string[] = []
-  headerRow.eachCell({ includeEmpty: false }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
-  if (columnNameList.includes('##INVALID##')) {
-    throw new DBFixtureJsError('Includes invalid data in Excel file')
-    // return
-  }
+  const wb = await workbook.xlsx.readFile(excelFilePath)
 
-  const rowDataList: RowData[] = []
-  worksheet1.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-    if (rowNumber === 1) {
-      return
+  for (let ws of wb.worksheets) {
+    console.log('シート名: ' + ws.name)
+    const schemaAndTable = ws.name.split('.', 2)
+    if (schemaAndTable.length === 0) {
+      return ret
     }
-    const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
-    row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-      // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
-      const valueType = cell.type
-      if (valueType === ExcelJS.ValueType.Number) {
-        rowData[colNumber - 1] = cell.value as number
-      } else if (valueType === ExcelJS.ValueType.String) {
-        rowData[colNumber - 1] = cell.value as string
-      } else if (valueType === ExcelJS.ValueType.Date) {
-        rowData[colNumber - 1] = cell.value as Date
-      } else if (valueType === ExcelJS.ValueType.Null) {
-        rowData[colNumber - 1] = null
-      } else {
-        console.warn(`非対応の書式が使われている ${cell.$col$row}`)
-        rowData[colNumber - 1] = null
+    let dbName: string | undefined
+    let tableName: string
+    if (schemaAndTable.length === 1) {
+      tableName = schemaAndTable[0]
+    } else {
+      dbName = schemaAndTable[0]
+      tableName = schemaAndTable[1]
+    }
+    const headerRow = ws.getRow(1)
+    const columnNameList: string[] = []
+    headerRow.eachCell({ includeEmpty: false }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
+    if (columnNameList.includes('##INVALID##')) {
+      throw new DBFixtureJsError('Includes invalid data in Excel file')
+      // return
+    }
+
+    const rowDataList: RowData[] = []
+    ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber === 1) {
+        return
       }
+      const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        // console.log(`${colNumber} cell.type =  ${excelValueTypeToString(cell.type)}, value = ${cell.value}, text = ${cell.text}`)
+        const valueType = cell.type
+        if (valueType === ExcelJS.ValueType.Number) {
+          rowData[colNumber - 1] = cell.value as number
+        } else if (valueType === ExcelJS.ValueType.String) {
+          rowData[colNumber - 1] = cell.value as string
+        } else if (valueType === ExcelJS.ValueType.Date) {
+          rowData[colNumber - 1] = cell.value as Date
+        } else if (valueType === ExcelJS.ValueType.Null) {
+          rowData[colNumber - 1] = null
+        } else {
+          console.warn(`非対応の書式が使われている ${cell.$col$row}`)
+          rowData[colNumber - 1] = null
+        }
+      })
+      rowDataList.push(rowData)
     })
-    rowDataList.push(rowData)
-  })
 
-  const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
-  if (from.includes(' ')) {
-    throw new DBFixtureJsError('Includes invalid table name in Excel file')
-    // return
-  }
+    const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
+    if (from.includes(' ')) {
+      throw new DBFixtureJsError('Includes invalid table name in Excel file')
+      // return
+    }
 
-  // eslint-disable-next-line no-unused-vars
-  const [, fields] = await dbConn.query(`SELECT *
+    // eslint-disable-next-line no-unused-vars
+    const [, fields] = await dbConn.query(`SELECT *
                                            FROM ${from}
                                            LIMIT 1`)
 
-  let ct: ColumnTypes = []
-  fields.forEach((v) => {
-    // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
-    ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
-  })
+    let ct: ColumnTypes = []
+    fields.forEach((v) => {
+      // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
+      ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
+    })
 
-  let hasClmnInSameOrder = true
-  columnNameList.forEach((excelCols, index) => {
-    if (excelCols !== ct[index].columnName) {
-      hasClmnInSameOrder = false
+    let hasClmnInSameOrder = true
+    columnNameList.forEach((excelCols, index) => {
+      if (excelCols !== ct[index].columnName) {
+        hasClmnInSameOrder = false
+      }
+    })
+    if (!hasClmnInSameOrder) {
+      console.log('テーブルのカラム順とExcelのカラム順が異なる')
+      throw new DBFixtureJsError('Not have columns in same order')
+      // return
     }
-  })
-  if (!hasClmnInSameOrder) {
-    console.log('テーブルのカラム順とExcelのカラム順が異なる')
-    throw new DBFixtureJsError('Not have columns in same order')
-    // return
-  }
 
-  const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
-  ret.push(td1)
+    const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList })
+    ret.push(td1)
+  }
 
   return ret
 }
