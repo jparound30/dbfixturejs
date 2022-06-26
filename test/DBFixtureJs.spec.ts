@@ -29,6 +29,8 @@ describe('DBFixtureJs', () => {
   const testdata2File = path.join(__dirname, 'test_data_datetime.xlsx')
   const testdata3File = path.join(__dirname, 'test_data_strings.xlsx')
 
+  const testdataMultiTableFile = path.join(__dirname, 'test_data_multitables.xlsx')
+
   test('整数型のカラムに値が入れられること', async () => {
     await dbfixture.load(testdata1File)
 
@@ -87,5 +89,27 @@ describe('DBFixtureJs', () => {
 ついでに改行も入れてみてどうなるか見てみるよ`)
     expect(data[0].c_enum).toBe('two')
     expect(data[0].c_set).toBe('b,d')
+  })
+
+  test('複数テーブルのエクセルに対応すること', async () => {
+    await dbfixture.load(testdataMultiTableFile)
+
+    const result1 = await connection.query(`SELECT * FROM multi1`)
+    const data1 = result1[0] as RowDataPacket[]
+
+    expect(data1[0].id).toBe(1)
+    expect(data1[0].multi1).toBe('multi1')
+
+    const result2 = await connection.query(`SELECT * FROM multi2`)
+    const data2 = result2[0] as RowDataPacket[]
+
+    expect(data2[0].id).toBe(1)
+    expect(data2[0].multi2).toBe('multi2')
+
+    const result3 = await connection.query(`SELECT * FROM multi3`)
+    const data3 = result3[0] as RowDataPacket[]
+
+    expect(data3[0].id).toBe(1)
+    expect(data3[0].multi3).toBe('multi3')
   })
 })
