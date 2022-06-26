@@ -5,5 +5,6 @@ export interface DBFixtureConnOpts {
   database?: string
   charset?: string
   debug?: boolean
+  timezone?: string
 }
 export * from './DBFixtureJs'
