@@ -92,7 +92,6 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
       }
     })
     if (!hasColumnsInSameOrder) {
-      console.log('テーブルのカラム順とExcelのカラム順が異なる')
       throw new DBFixtureJsError('Not have columns in same order')
     }
 
@@ -113,8 +112,6 @@ export class DBFixtureJs {
   }
 
   public async load(filepath: string): Promise<void> {
-    console.log('load()')
-
     const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
     const connection = await mysql2.createConnection(opt)
 
@@ -138,7 +135,6 @@ export class DBFixtureJs {
   }
 
   private async truncateTbl(tableName: string, conn: mysql2.Connection) {
-    console.log(`truncateTable: ${tableName}`)
     await conn.execute(`TRUNCATE ${tableName}`)
   }
 
@@ -149,9 +145,7 @@ export class DBFixtureJs {
     }
   }
 
-  public export() {
-    console.log('export()')
-  }
+  public export() {}
 }
 
 const ExcelValueType = {
