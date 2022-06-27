@@ -105,6 +105,7 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
 export class DBFixtureJs {
   private readonly dbConnOpt: DBFixtureConnOpts
   private readonly options: Required<DBFixtureJsOptions>
+  private data?: TableData[]
 
   constructor(connOpts: DBFixtureConnOpts, options: DBFixtureJsOptions) {
     this.dbConnOpt = connOpts
@@ -112,13 +113,15 @@ export class DBFixtureJs {
   }
 
   public async load(filepath: string): Promise<void> {
+    this.data = undefined
+
     const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
     const connection = await mysql2.createConnection(opt)
 
     try {
-      let tableData = await excel2TableData(filepath, connection, this.options)
+      this.data = await excel2TableData(filepath, connection, this.options)
 
-      for (let td of tableData) {
+      for (let td of this.data) {
         const insertSql = td.createInsertSql()
         await this.truncateTbl(td.tableName, connection)
         await this.executeSql([insertSql], connection)
@@ -142,6 +145,23 @@ export class DBFixtureJs {
     for (const insertSql of sqlList) {
       const [insData] = await conn.query(insertSql)
       console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+    }
+  }
+
+  async cleanUp() {
+    if (this.data === undefined) {
+      return
+    }
+
+    const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
+    const connection = await mysql2.createConnection(opt)
+
+    try {
+      for (let td of this.data) {
+        await this.truncateTbl(td.tableName, connection)
+      }
+    } finally {
+      connection.end()
     }
   }
 

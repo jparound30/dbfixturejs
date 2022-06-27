@@ -125,4 +125,38 @@ describe('DBFixtureJs', () => {
     expect(data[0].c_char).toBeNull()
     expect(data[0].c_varchar).toBe('')
   })
+
+  test('複数テーブルのエクセルに対応すること:cleanUp', async () => {
+    await dbfixture.load(testdataMultiTableFile)
+
+    let result1 = await connection.query(`SELECT *FROM multi1`)
+    let data1 = result1[0] as RowDataPacket[]
+    expect(data1[0].id).toBe(1)
+    expect(data1[0].multi1).toBe('multi1')
+
+    let result2 = await connection.query(`SELECT *FROM multi2`)
+    let data2 = result2[0] as RowDataPacket[]
+    expect(data2[0].id).toBe(1)
+    expect(data2[0].multi2).toBe('multi2')
+
+    let result3 = await connection.query(`SELECT *FROM multi3`)
+    let data3 = result3[0] as RowDataPacket[]
+    expect(data3[0].id).toBe(1)
+    expect(data3[0].multi3).toBe('multi3')
+
+    await dbfixture.cleanUp()
+
+    // Excelのシートに対応したすべてのテーブルのデータが削除されていることを確認
+    result1 = await connection.query(`SELECT * FROM multi1`)
+    data1 = result1[0] as RowDataPacket[]
+    expect(data1).toHaveLength(0)
+
+    result2 = await connection.query(`SELECT * FROM multi2`)
+    data2 = result2[0] as RowDataPacket[]
+    expect(data2).toHaveLength(0)
+
+    result3 = await connection.query(`SELECT * FROM multi3`)
+    data3 = result3[0] as RowDataPacket[]
+    expect(data3).toHaveLength(0)
+  })
 })
