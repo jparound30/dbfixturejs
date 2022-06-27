@@ -28,7 +28,6 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
   const wb = await workbook.xlsx.readFile(excelFilePath)
 
   for (let ws of wb.worksheets) {
-    console.log('シート名: ' + ws.name)
     const schemaAndTable = ws.name.split('.', 2)
     if (schemaAndTable.length === 0) {
       return ret
@@ -46,7 +45,6 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
     headerRow.eachCell({ includeEmpty: false }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
     if (columnNameList.includes('##INVALID##')) {
       throw new DBFixtureJsError('Includes invalid data in Excel file')
-      // return
     }
 
     const rowDataList: RowData[] = []
@@ -76,34 +74,30 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
     const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
     if (from.includes(' ')) {
       throw new DBFixtureJsError('Includes invalid table name in Excel file')
-      // return
     }
 
-    // eslint-disable-next-line no-unused-vars
     const [, fields] = await dbConn.query(`SELECT *
                                                FROM ${from}
                                                LIMIT 1`)
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
-      // console.log(`カラム名:[${v.name}]\t型: ${typeToString(v.columnType)}`)
       ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
     })
 
-    let hasClmnInSameOrder = true
+    let hasColumnsInSameOrder = true
     columnNameList.forEach((excelCols, index) => {
       if (excelCols !== ct[index].columnName) {
-        hasClmnInSameOrder = false
+        hasColumnsInSameOrder = false
       }
     })
-    if (!hasClmnInSameOrder) {
+    if (!hasColumnsInSameOrder) {
       console.log('テーブルのカラム順とExcelのカラム順が異なる')
       throw new DBFixtureJsError('Not have columns in same order')
-      // return
     }
 
-    const td1 = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList, emptyStr: emptyStr })
-    ret.push(td1)
+    const td = new TableData({ schemaName: dbName, name: tableName, columnTypes: ct, data: rowDataList, emptyStr: emptyStr })
+    ret.push(td)
   }
 
   return ret
@@ -143,13 +137,13 @@ export class DBFixtureJs {
     return []
   }
 
-  private async truncateTbl(target: string, conn: mysql2.Connection) {
-    console.log(`truncateTable: ${target}`)
-    await conn.execute(`TRUNCATE ${target}`)
+  private async truncateTbl(tableName: string, conn: mysql2.Connection) {
+    console.log(`truncateTable: ${tableName}`)
+    await conn.execute(`TRUNCATE ${tableName}`)
   }
 
-  private async executeSql(sqls: string[], conn: mysql2.Connection): Promise<void> {
-    for (const insertSql of sqls) {
+  private async executeSql(sqlList: string[], conn: mysql2.Connection): Promise<void> {
+    for (const insertSql of sqlList) {
       const [insData] = await conn.query(insertSql)
       console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
     }
