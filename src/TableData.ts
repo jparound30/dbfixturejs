@@ -1,9 +1,9 @@
 import mysql2 from 'mysql2/promise'
 import dayjs from 'dayjs'
-import { DBColumnTypes, isStringColumnType, TypesVal } from './DBFixtureJs'
+import { DBColumnTypes, isStringDBColumnType, DBColumnType } from './DBColumnType'
 
 export type RowData = Array<string | number | Date | null>
-export type ColumnTypes = Array<{ columnName: string; columnType: TypesVal }>
+export type ColumnTypes = Array<{ columnName: string; columnType: DBColumnType }>
 
 export class TableData {
   readonly schemaName: string | null
@@ -31,7 +31,7 @@ export class TableData {
       const rowStr = row
         .map((col, index) => {
           const columnType = this.columnTypes[index].columnType
-          if (isStringColumnType(this.columnTypes[index].columnType)) {
+          if (isStringDBColumnType(this.columnTypes[index].columnType)) {
             if (col !== null && col.toString().match(this.emptyStr)) {
               return mysql2.escape('')
             }

@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs'
 import mysql2, { ResultSetHeader } from 'mysql2/promise'
 import { DBFixtureJsOptions } from './index'
 import { ColumnTypes, RowData, TableData } from './TableData'
+import { DBColumnType } from './DBColumnType'
 
 export interface DBFixtureConnOpts {
   host: string
@@ -82,7 +83,7 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
-      ct.push({ columnName: v.name, columnType: v.columnType as TypesVal })
+      ct.push({ columnName: v.name, columnType: v.columnType as DBColumnType })
     })
 
     let hasColumnsInSameOrder = true
@@ -190,64 +191,4 @@ Object.entries(ExcelValueType).forEach((v) => {
 // eslint-disable-next-line no-unused-vars
 function excelValueTypeToString(type: number): string | undefined {
   return convTblForExcelValueType.get(type)
-}
-
-export const DBColumnTypes = {
-  DECIMAL: 0,
-  TINY: 1,
-  SHORT: 2,
-  LONG: 3,
-  FLOAT: 4,
-  DOUBLE: 5,
-  NULL: 6,
-  TIMESTAMP: 7,
-  LONGLONG: 8,
-  INT24: 9,
-  DATE: 10,
-  TIME: 11,
-  DATETIME: 12,
-  YEAR: 13,
-  NEWDATE: 14,
-  VARCHAR: 15,
-  BIT: 16,
-  TIMESTAMP2: 17,
-  DATETIME2: 18,
-  TIME2: 19,
-  JSON: 245,
-  NEWDECIMAL: 246,
-  ENUM: 247,
-  SET: 248,
-  TINY_BLOB: 249,
-  MEDIUM_BLOB: 250,
-  LONG_BLOB: 251,
-  BLOB: 252,
-  VAR_STRING: 253,
-  STRING: 254,
-  GEOMETRY: 255,
-} as const
-
-const convTbl = new Map<number, string>()
-Object.entries(DBColumnTypes).forEach((v) => {
-  convTbl.set(v[1], v[0])
-})
-
-// eslint-disable-next-line no-unused-vars
-function typeToString(type: number): string | undefined {
-  return convTbl.get(type)
-}
-
-export type TypesVal = typeof DBColumnTypes[keyof typeof DBColumnTypes]
-
-export const isStringColumnType = (v: TypesVal): boolean => {
-  return (
-    v === DBColumnTypes.VARCHAR ||
-    v === DBColumnTypes.ENUM ||
-    v === DBColumnTypes.SET ||
-    v === DBColumnTypes.TINY_BLOB ||
-    v === DBColumnTypes.MEDIUM_BLOB ||
-    v === DBColumnTypes.LONG_BLOB ||
-    v === DBColumnTypes.BLOB ||
-    v === DBColumnTypes.VAR_STRING ||
-    v === DBColumnTypes.STRING
-  )
 }
