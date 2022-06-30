@@ -124,9 +124,21 @@ export class DBFixtureJs {
     await conn.end()
   }
 
-  public createSqlFrom(filepath: string): string[] {
-    // TODO
-    return []
+  public async createSqlFrom(filepath: string): Promise<string[]> {
+    const ret: string[] = []
+    const connection = await this.connect()
+
+    try {
+      const tds = await excel2TableData(filepath, connection, this.options)
+
+      for (let td of tds) {
+        const insertSql = td.createInsertSql()
+        ret.push(insertSql)
+      }
+    } finally {
+      await this.disconnect(connection)
+    }
+    return ret
   }
 
   private async truncateTbl(tableName: string, conn: mysql2.Connection) {

@@ -26,7 +26,7 @@ export class TableData {
 
   public createInsertSql(): string {
     const sql1 = `INSERT INTO ${this.tableName} `
-    const cols = '(' + this.columnTypes.map((v) => v.columnName).join(',') + ') VALUES \n'
+    const cols = '(' + this.columnTypes.map((v) => v.columnName).join(',') + ') VALUES\n'
     const values = this.data.map((row) => {
       const rowStr = row
         .map((col, index) => {
@@ -56,7 +56,7 @@ export class TableData {
           return mysql2.escape(col)
         })
         .join(',')
-      return `(${rowStr}) \n`
+      return `(${rowStr})\n`
     })
     return sql1 + cols + values
   }

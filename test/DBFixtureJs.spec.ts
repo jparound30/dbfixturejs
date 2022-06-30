@@ -159,4 +159,20 @@ describe('DBFixtureJs', () => {
     data3 = result3[0] as RowDataPacket[]
     expect(data3).toHaveLength(0)
   })
+
+  test('Excel（とDB）からSQL生成ができること', async () => {
+    const sqlList = await dbfixture.createSqlFrom(testdataMultiTableFile)
+
+    expect(sqlList).toHaveLength(3)
+
+    expect(sqlList[0]).toBe(`INSERT INTO multi1 (id,multi1) VALUES
+(1,'multi1')
+`)
+    expect(sqlList[1]).toBe(`INSERT INTO multi2 (id,multi2) VALUES
+(1,'multi2')
+`)
+    expect(sqlList[2]).toBe(`INSERT INTO multi3 (id,multi3) VALUES
+(1,'multi3')
+`)
+  })
 })
