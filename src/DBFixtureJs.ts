@@ -161,27 +161,3 @@ export class DBFixtureJs {
 
   public export() {}
 }
-
-const ExcelValueType = {
-  Null: 0,
-  Merge: 1,
-  Number: 2,
-  String: 3,
-  Date: 4,
-  Hyperlink: 5,
-  Formula: 6,
-  SharedString: 7,
-  RichText: 8,
-  Boolean: 9,
-  Error: 10,
-} as const
-
-const convTblForExcelValueType = new Map<number, string>()
-Object.entries(ExcelValueType).forEach((v) => {
-  convTblForExcelValueType.set(v[1], v[0])
-})
-
-// eslint-disable-next-line no-unused-vars
-function excelValueTypeToString(type: number): string | undefined {
-  return convTblForExcelValueType.get(type)
-}
