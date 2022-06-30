@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import mysql2, { ResultSetHeader } from 'mysql2/promise'
+import mysql2, { Connection, ResultSetHeader } from 'mysql2/promise'
 import { ColumnTypes, RowData, TableData } from './TableData'
 import { DBColumnType } from './DBColumnType'
 import { DBFixtureConnOption } from './DBFixtureConnOption'
@@ -100,9 +100,7 @@ export class DBFixtureJs {
 
   public async load(filepath: string): Promise<void> {
     this.data = undefined
-
-    const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
-    const connection = await mysql2.createConnection(opt)
+    const connection = await this.connect()
 
     try {
       this.data = await excel2TableData(filepath, connection, this.options)
@@ -113,9 +111,17 @@ export class DBFixtureJs {
         await this.executeSql([insertSql], connection)
       }
     } finally {
-      connection.end()
+      await this.disconnect(connection)
     }
     return
+  }
+
+  private async connect(): Promise<Connection> {
+    const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
+    return mysql2.createConnection(opt)
+  }
+  private async disconnect(conn: Connection): Promise<void> {
+    await conn.end()
   }
 
   public createSqlFrom(filepath: string): string[] {
@@ -139,15 +145,14 @@ export class DBFixtureJs {
       return
     }
 
-    const opt = Object.assign({ supportBigNumbers: true, bigNumberStrings: true }, this.dbConnOpt)
-    const connection = await mysql2.createConnection(opt)
+    const connection = await this.connect()
 
     try {
       for (let td of this.data) {
         await this.truncateTbl(td.tableName, connection)
       }
     } finally {
-      connection.end()
+      await this.disconnect(connection)
     }
   }
 
