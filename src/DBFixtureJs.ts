@@ -1,9 +1,9 @@
 import ExcelJS from 'exceljs'
 import mysql2, { ResultSetHeader } from 'mysql2/promise'
-import { DBFixtureJsOptions } from './index'
 import { ColumnTypes, RowData, TableData } from './TableData'
 import { DBColumnType } from './DBColumnType'
 import { DBFixtureConnOption } from './DBFixtureConnOption'
+import { DBFixtureOption } from './DBFixtureOption'
 
 class DBFixtureJsError extends Error {
   readonly cause?: Error
@@ -14,7 +14,7 @@ class DBFixtureJsError extends Error {
   }
 }
 
-async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection, options: Required<DBFixtureJsOptions>): Promise<TableData[]> {
+async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection, options: Required<DBFixtureOption>): Promise<TableData[]> {
   const ret: TableData[] = []
 
   const emptyStr = options.emptyStrForStringColumn
@@ -98,10 +98,10 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
 
 export class DBFixtureJs {
   private readonly dbConnOpt: DBFixtureConnOption
-  private readonly options: Required<DBFixtureJsOptions>
+  private readonly options: Required<DBFixtureOption>
   private data?: TableData[]
 
-  constructor(connOpts: DBFixtureConnOption, options: DBFixtureJsOptions) {
+  constructor(connOpts: DBFixtureConnOption, options: DBFixtureOption) {
     this.dbConnOpt = connOpts
     this.options = Object.assign({}, options, { emptyStrForStringColumn: options.emptyStrForStringColumn ?? 'EMPTY' })
   }
