@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import mysql2, { Connection, ResultSetHeader } from 'mysql2/promise'
+import mysql2, { Connection } from 'mysql2/promise'
 import { ColumnTypes, RowData, TableData } from './TableData'
 import { DBColumnType } from './DBColumnType'
 import { DBFixtureConnOption } from './DBFixtureConnOption'
@@ -50,7 +50,7 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
         } else if (valueType === ExcelJS.ValueType.Null) {
           rowData[colNumber - 1] = null
         } else {
-          console.warn(`非対応の書式が使われている ${cell.$col$row}`)
+          // TODO console.warn(`非対応の書式が使われている ${cell.$col$row}`)
           rowData[colNumber - 1] = null
         }
       })
@@ -147,8 +147,7 @@ export class DBFixtureJs {
 
   private async executeSql(sqlList: string[], conn: mysql2.Connection): Promise<void> {
     for (const insertSql of sqlList) {
-      const [insData] = await conn.query(insertSql)
-      console.log(`inserted records: ${(insData as ResultSetHeader).affectedRows}`)
+      await conn.query(insertSql)
     }
   }
 
