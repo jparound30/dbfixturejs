@@ -72,11 +72,13 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
     })
 
     let hasColumnsInSameOrder = true
-    columnNameList.forEach((excelCols, index) => {
+    for (const excelCols of columnNameList) {
+      const index = columnNameList.indexOf(excelCols)
       if (excelCols !== ct[index].columnName) {
         hasColumnsInSameOrder = false
+        break
       }
-    })
+    }
     if (!hasColumnsInSameOrder) {
       throw new DBFixtureJsError('Not have columns in same order')
     }
