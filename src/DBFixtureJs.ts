@@ -3,14 +3,7 @@ import mysql2, { ResultSetHeader } from 'mysql2/promise'
 import { DBFixtureJsOptions } from './index'
 import { ColumnTypes, RowData, TableData } from './TableData'
 import { DBColumnType } from './DBColumnType'
-
-export interface DBFixtureConnOpts {
-  host: string
-  user: string
-  password: string
-  database?: string
-  charset?: string
-}
+import { DBFixtureConnOption } from './DBFixtureConnOption'
 
 class DBFixtureJsError extends Error {
   readonly cause?: Error
@@ -104,11 +97,11 @@ async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection,
 }
 
 export class DBFixtureJs {
-  private readonly dbConnOpt: DBFixtureConnOpts
+  private readonly dbConnOpt: DBFixtureConnOption
   private readonly options: Required<DBFixtureJsOptions>
   private data?: TableData[]
 
-  constructor(connOpts: DBFixtureConnOpts, options: DBFixtureJsOptions) {
+  constructor(connOpts: DBFixtureConnOption, options: DBFixtureJsOptions) {
     this.dbConnOpt = connOpts
     this.options = Object.assign({}, options, { emptyStrForStringColumn: options.emptyStrForStringColumn ?? 'EMPTY' })
   }

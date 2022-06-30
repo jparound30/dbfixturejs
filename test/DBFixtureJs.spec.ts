@@ -1,10 +1,10 @@
-import { DBFixtureConnOpts, DBFixtureJs } from '../src'
+import { DBFixtureConnOption, DBFixtureJs } from '../src'
 import * as path from 'path'
 import mysql2, { RowDataPacket } from 'mysql2/promise'
 import dayjs from 'dayjs'
 import { TextEncoder } from 'util'
 
-const conf: DBFixtureConnOpts = {
+const conf: DBFixtureConnOption = {
   host: 'localhost',
   user: 'user',
   password: 'user12345!',
