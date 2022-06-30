@@ -4,15 +4,7 @@ import { ColumnTypes, RowData, TableData } from './TableData'
 import { DBColumnType } from './DBColumnType'
 import { DBFixtureConnOption } from './DBFixtureConnOption'
 import { DBFixtureOption } from './DBFixtureOption'
-
-class DBFixtureJsError extends Error {
-  readonly cause?: Error
-
-  constructor(msg: string, cause?: Error) {
-    super(msg + '' + (cause ? ', cause : ' + cause.message : ''))
-    this.name = new.target.name
-  }
-}
+import { DBFixtureJsError } from './DBFixtureJsError'
 
 async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection, options: Required<DBFixtureOption>): Promise<TableData[]> {
   const ret: TableData[] = []
