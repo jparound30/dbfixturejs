@@ -2,6 +2,7 @@
 import mysql2 from 'mysql2'
 
 // node-mysql2の型定義が実際のものとあっていないためworkaroundとして内部で型を持つ
+// FIX node-mysql2 の 1b37e121587a57f76eb1070a4ae659d28f4523f6 を含むリリースで不要となるはず(columnType -> typ に変更必要)
 declare module 'mysql2' {
   interface FieldPacket {
     constructor: {
