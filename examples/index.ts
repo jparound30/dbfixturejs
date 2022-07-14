@@ -14,8 +14,11 @@ const dbFixtureJs = new DBFixtureJs(
 dbFixtureJs
   .load('./examples/testdata1.xlsx')
   .then(() => {
-    dbFixtureJs.export()
+    return dbFixtureJs.createSqlFrom('./examples/testdata1.xlsx')
   })
-  .then(() => {
+  .then((sqlList) => {
+    for (let sql of sqlList) {
+      console.log(sql)
+    }
     process.exit(0)
   })
