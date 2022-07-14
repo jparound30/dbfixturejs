@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "sourceMap": false,
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "rootDirs": ["./src"],
+    "baseUrl": "./src",
+    "declaration": true,
+  },
+  "include": [
+    "src",
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
+}
