@@ -82,6 +82,4 @@ export class DBFixtureJs {
       await this.disconnect(connection)
     }
   }
-
-  public export() {}
 }
