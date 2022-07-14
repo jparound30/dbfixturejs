@@ -49,7 +49,7 @@ export async function excel2TableData(excelFilePath: string, dbConn: mysql2.Conn
         } else if (valueType === ExcelJS.ValueType.Null) {
           rowData[colNumber - 1] = null
         } else {
-          // TODO console.warn(`非対応の書式が使われている ${cell.$col$row}`)
+          // TODO unsupported cell format
           rowData[colNumber - 1] = null
         }
       })
