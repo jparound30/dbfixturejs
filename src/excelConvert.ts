@@ -5,6 +5,28 @@ import ExcelJS from 'exceljs'
 import { DBFixtureJsError } from './DBFixtureJsError'
 import { DBColumnType } from './DBColumnType'
 
+function sheetNameToDbTableName(sheetName: string): { dbName?: string; tableName: string } {
+  const schemaAndTable = sheetName.split('.', 2)
+  if (!schemaAndTable.length) {
+    throw new DBFixtureJsError("Invalid sheetName. sheetName expects 'tableName' or 'schemaName.tableName'")
+  }
+  let dbName: string | undefined
+  let tableName: string
+  if (schemaAndTable.length === 1) {
+    tableName = schemaAndTable[0].trim()
+    if (!tableName.length) {
+      throw new DBFixtureJsError(`Invalid sheetName(empty string).`)
+    }
+  } else {
+    dbName = schemaAndTable[0].trim()
+    tableName = schemaAndTable[1].trim()
+    if (!dbName.length || !tableName.length) {
+      throw new DBFixtureJsError(`Invalid sheetName(empty string).`)
+    }
+  }
+  return { dbName, tableName }
+}
+
 export async function excel2TableData(excelFilePath: string, dbConn: mysql2.Connection, options: Required<DBFixtureOption>): Promise<TableData[]> {
   const ret: TableData[] = []
 
@@ -13,57 +35,46 @@ export async function excel2TableData(excelFilePath: string, dbConn: mysql2.Conn
   const wb = await workbook.xlsx.readFile(excelFilePath)
 
   for (let ws of wb.worksheets) {
-    const schemaAndTable = ws.name.split('.', 2)
-    if (schemaAndTable.length === 0) {
-      return ret
-    }
-    let dbName: string | undefined
-    let tableName: string
-    if (schemaAndTable.length === 1) {
-      tableName = schemaAndTable[0]
-    } else {
-      dbName = schemaAndTable[0]
-      tableName = schemaAndTable[1]
-    }
+    const sheetName = ws.name
+    const { dbName, tableName } = sheetNameToDbTableName(sheetName)
+
     const headerRow = ws.getRow(1)
     const columnNameList: string[] = []
     headerRow.eachCell({ includeEmpty: false }, (cell) => columnNameList.push(cell?.value?.toString() ?? '##INVALID##'))
     if (columnNameList.includes('##INVALID##')) {
-      throw new DBFixtureJsError('Includes invalid data in Excel file')
+      throw new DBFixtureJsError('First row of sheet must have column name')
     }
 
     const rowDataList: RowData[] = []
     ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      // skip header row
       if (rowNumber === 1) {
         return
       }
       const rowData: RowData = new Array<string | number | Date | null>(columnNameList.length).fill(null)
       row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
         const valueType = cell.type
+        let cellValue: RowData[0]
         if (valueType === ExcelJS.ValueType.Number) {
-          rowData[colNumber - 1] = cell.value as number
+          cellValue = cell.value as number
         } else if (valueType === ExcelJS.ValueType.String) {
-          rowData[colNumber - 1] = cell.value as string
+          cellValue = cell.value as string
         } else if (valueType === ExcelJS.ValueType.Date) {
-          rowData[colNumber - 1] = cell.value as Date
+          cellValue = cell.value as Date
         } else if (valueType === ExcelJS.ValueType.Null) {
-          rowData[colNumber - 1] = null
+          cellValue = null
         } else {
           // TODO unsupported cell format
-          rowData[colNumber - 1] = null
+          cellValue = null
         }
+        rowData[colNumber - 1] = cellValue
       })
       rowDataList.push(rowData)
     })
 
+    // extract column information from table
     const from = dbName ? `${dbName}.${tableName}` : `${tableName}`
-    if (from.includes(' ')) {
-      throw new DBFixtureJsError('Includes invalid table name in Excel file')
-    }
-
-    const [, fields] = await dbConn.query(`SELECT *
-                                               FROM ${from}
-                                               LIMIT 1`)
+    const [, fields] = await dbConn.query(`SELECT * FROM ${from}  LIMIT 1`)
 
     let ct: ColumnTypes = []
     fields.forEach((v) => {
@@ -71,15 +82,13 @@ export async function excel2TableData(excelFilePath: string, dbConn: mysql2.Conn
     })
 
     let hasColumnsInSameOrder = true
-    for (const excelCols of columnNameList) {
-      const index = columnNameList.indexOf(excelCols)
-      if (excelCols !== ct[index].columnName) {
+    columnNameList.forEach((v, index) => {
+      if (hasColumnsInSameOrder && v !== ct[index].columnName) {
         hasColumnsInSameOrder = false
-        break
       }
-    }
+    })
     if (!hasColumnsInSameOrder) {
-      throw new DBFixtureJsError('Not have columns in same order')
+      throw new DBFixtureJsError('Not have columns in same order(table and excel)')
     }
 
     const td = new TableData({
