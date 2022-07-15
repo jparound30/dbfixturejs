@@ -56,9 +56,9 @@ describe('DBFixtureJs', () => {
     const data = result[0] as RowDataPacket[]
 
     expect(data[0].k).toBe(1)
-    expect(data[0].c_datetime).toEqual(dayjs('2021-01-02 13:09:08').toDate())
-    expect(data[0].c_timestamp).toEqual(dayjs('2021-01-02 01:09:08').toDate())
-    expect(data[0].c_date).toEqual(dayjs('2021-01-09').toDate())
+    expect(data[0].c_datetime).toEqual(dayjs('2021-01-02T13:09:08+09:00').toDate())
+    expect(data[0].c_timestamp).toEqual(dayjs('2021-01-02T01:09:08+09:00').toDate())
+    expect(data[0].c_date).toEqual(dayjs('2021-01-09T00:00:00+09:00').toDate())
     expect(data[0].c_time).toBe('13:09:59')
     expect(data[0].c_year).toBe(2023)
   })
