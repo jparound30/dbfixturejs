@@ -10,6 +10,6 @@
 !.yarn/cache
 #.pnp.*
 
-dist
+#dist
 /node_modules
 /.idea/
